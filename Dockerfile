@@ -1,20 +1,13 @@
-FROM node:carbon
+FROM golang:1.12-alpine AS build
+#Install git
+RUN apk add --no-cache git
+#Get the hello world package from a GitHub repository
+RUN go get github.com/golang/example/hello
+WORKDIR /go/src/github.com/golang/example/hello
+# Build the project and send the output to /bin/HelloWorld 
+RUN go build -o /bin/HelloWorld
 
-
-# Create app directory
-WORKDIR /usr/src/app
-
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
-
-RUN npm install
-# If you are building your code for production
-# RUN npm install --only=production
-
-# Bundle app source
-COPY . .
-
-EXPOSE 8080
-CMD [ "npm", "start" ]
+FROM golang:1.12-alpine
+#Copy the build's output binary from the previous build container
+COPY --from=build /bin/HelloWorld /bin/HelloWorld
+ENTRYPOINT ["/bin/HelloWorld"]
